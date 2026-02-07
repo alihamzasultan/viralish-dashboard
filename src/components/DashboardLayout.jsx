@@ -1,0 +1,74 @@
+import React from 'react'
+import { Link, Outlet, useLocation } from 'react-router-dom'
+import { LayoutDashboard, Video, Database, Settings, Brain, ChevronLeft, ChevronRight, Menu } from 'lucide-react'
+import clsx from 'clsx'
+import '../styles/Dashboard.css'
+
+const DashboardLayout = () => {
+    const location = useLocation()
+    const [isCollapsed, setIsCollapsed] = React.useState(false)
+
+    const navItems = [
+        { label: 'Overview', path: '/', icon: LayoutDashboard },
+        { label: 'Generated Videos', path: '/generated', icon: Video },
+        { label: 'Source Videos', path: '/sources', icon: Database },
+        { label: 'Analyzed Videos', path: '/analyzed', icon: Brain },
+    ]
+
+    return (
+        <div className="dashboard-container">
+            {/* Sidebar */}
+            <aside className={clsx('sidebar', isCollapsed && 'collapsed')}>
+                <div className="sidebar-header">
+                    {!isCollapsed && <h1 className="brand-title">Viralish AI</h1>}
+                    <button
+                        className="collapse-btn"
+                        onClick={() => setIsCollapsed(!isCollapsed)}
+                        title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                    >
+                        {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+                    </button>
+                </div>
+                <nav className="nav-menu">
+                    {navItems.map((item) => {
+                        const Icon = item.icon
+                        const isActive = location.pathname === item.path
+                        return (
+                            <Link
+                                key={item.path}
+                                to={item.path}
+                                className={clsx('nav-item', isActive && 'active')}
+                                title={isCollapsed ? item.label : ''}
+                            >
+                                <Icon size={20} />
+                                {!isCollapsed && <span className="font-medium">{item.label}</span>}
+                            </Link>
+                        )
+                    })}
+                </nav>
+                <div className="sidebar-footer">
+                    {/* Settings removed as per request */}
+                </div>
+            </aside>
+
+            {/* Main Content */}
+            <main className="main-content">
+                <header className="top-bar">
+                    <h2 className="page-title">
+                        {navItems.find((i) => i.path === location.pathname)?.label || 'Dashboard'}
+                    </h2>
+                    <div className="flex items-center space-x-4">
+                        <div className="user-avatar">
+                            VA
+                        </div>
+                    </div>
+                </header>
+                <div className="content-area">
+                    <Outlet />
+                </div>
+            </main>
+        </div>
+    )
+}
+
+export default DashboardLayout
