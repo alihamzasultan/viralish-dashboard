@@ -116,8 +116,8 @@ const CustomVideos = () => {
                                 {/* Seedance Output */}
                                 {video.seedance_output_url ? (
                                     <div className="video-output-item">
-                                        <div className="video-label">Seedance Output</div>
                                         <div className="video-wrapper">
+                                            <div className="video-label">Seedance</div>
                                             <video src={video.seedance_output_url} controls />
                                         </div>
                                         <div className="output-actions">
@@ -137,7 +137,7 @@ const CustomVideos = () => {
                                     </div>
                                 ) : (
                                     <div className="video-output-item pending">
-                                        <div className="video-label">Seedance Output</div>
+                                        <div className="video-label">Seedance</div>
                                         <div className="output-status">
                                             {video.generation_status === 'failed' ? (
                                                 <span className="status-failed"><AlertCircle size={14} /> Generation Failed</span>
@@ -151,8 +151,8 @@ const CustomVideos = () => {
                                 {/* Kling Output */}
                                 {video.kling_output_url ? (
                                     <div className="video-output-item">
-                                        <div className="video-label">Kling Output</div>
                                         <div className="video-wrapper">
+                                            <div className="video-label">Kling</div>
                                             <video src={video.kling_output_url} controls />
                                         </div>
                                         <div className="output-actions">
@@ -172,7 +172,7 @@ const CustomVideos = () => {
                                     </div>
                                 ) : (
                                     <div className="video-output-item pending">
-                                        <div className="video-label">Kling Output</div>
+                                        <div className="video-label">Kling</div>
                                         <div className="output-status">
                                             {video.generation_status === 'failed' ? (
                                                 <span className="status-failed"><AlertCircle size={14} /> Generation Failed</span>

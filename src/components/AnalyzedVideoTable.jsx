@@ -41,7 +41,8 @@ const AnalyzedVideoTable = () => {
                             <th className="thumbnail-cell">Preview</th>
                             <th>Video URL</th>
                             <th>Views</th>
-                            <th>Status</th>
+                            <th>Analysis</th>
+                            <th>Processing</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -77,11 +78,16 @@ const AnalyzedVideoTable = () => {
                                             {video.video_analyzed ? 'Analyzed' : 'Pending'}
                                         </span>
                                     </td>
+                                    <td>
+                                        <span className={`status-pill ${video.processed ? 'processed' : 'pending'}`}>
+                                            {video.processed ? 'Processed' : 'Pending'}
+                                        </span>
+                                    </td>
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="3" className="text-center py-8 text-gray-500">
+                                <td colSpan="5" className="text-center py-8 text-gray-500">
                                     No videos found in this category.
                                 </td>
                             </tr>
