@@ -1,18 +1,26 @@
 import React from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Video, Database, Settings, Brain, ChevronLeft, ChevronRight, Menu } from 'lucide-react'
+import { LayoutDashboard, Video, Database, Settings, Brain, ChevronLeft, ChevronRight, Menu, Upload, Sparkles } from 'lucide-react'
 import clsx from 'clsx'
 import '../styles/Dashboard.css'
 
 const DashboardLayout = () => {
     const location = useLocation()
     const [isCollapsed, setIsCollapsed] = React.useState(false)
+    const [isMobileOpen, setIsMobileOpen] = React.useState(false)
+
+    // Close mobile menu on route change
+    React.useEffect(() => {
+        setIsMobileOpen(false)
+    }, [location.pathname])
 
     const navItems = [
         { label: 'Overview', path: '/', icon: LayoutDashboard },
         { label: 'Generated Videos', path: '/generated', icon: Video },
         { label: 'Source Videos', path: '/sources', icon: Database },
         { label: 'Analyzed Videos', path: '/analyzed', icon: Brain },
+        { label: 'My Generations', path: '/custom', icon: Sparkles },
+        { label: 'Upload Video', path: '/upload', icon: Upload },
     ]
 
     return (

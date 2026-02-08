@@ -5,6 +5,8 @@ import StatsOverview from './components/StatsOverview'
 import VideoGrid from './components/VideoGrid'
 import SourceVideoTable from './components/SourceVideoTable'
 import AnalyzedVideoTable from './components/AnalyzedVideoTable'
+import VideoUpload from './components/VideoUpload'
+import CustomVideos from './components/CustomVideos'
 
 const DashboardHome = () => (
   <>
@@ -22,6 +24,8 @@ function App() {
           <Route path="generated" element={<VideoGrid />} />
           <Route path="sources" element={<SourceVideoTable />} />
           <Route path="analyzed" element={<AnalyzedVideoTable />} />
+          <Route path="upload" element={<VideoUpload />} />
+          <Route path="custom" element={<CustomVideos />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
