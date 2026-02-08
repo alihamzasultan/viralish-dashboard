@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
-import { Search, Filter, CheckCircle, Clock, AlertCircle } from 'lucide-react'
+import { Search, Filter, CheckCircle, Clock, AlertCircle, ExternalLink } from 'lucide-react'
 import '../styles/SourceVideoTable.css'
 
 const SourceVideoTable = () => {
@@ -8,7 +8,7 @@ const SourceVideoTable = () => {
     const [loading, setLoading] = useState(true)
 
     // Tab states
-    const [processedTab, setProcessedTab] = useState('pending') // 'pending' | 'processed'
+    const [processedTab, setProcessedTab] = useState('processed') // 'pending' | 'processed'
     const [analyzedTab, setAnalyzedTab] = useState('pending')   // 'pending' | 'analyzed'
 
     useEffect(() => {
@@ -41,6 +41,7 @@ const SourceVideoTable = () => {
                 <table className="source-table">
                     <thead>
                         <tr>
+                            <th className="thumbnail-cell">Preview</th>
                             <th>Video URL</th>
                             <th>Views</th>
                             <th>Status</th>
@@ -50,9 +51,27 @@ const SourceVideoTable = () => {
                         {videos.length > 0 ? (
                             videos.map((video) => (
                                 <tr key={video.id}>
+                                    <td className="thumbnail-cell">
+                                        <div className="thumbnail-container">
+                                            {(video.thumbnail_url || video.first_frame_url) ? (
+                                                <img
+                                                    src={video.thumbnail_url || video.first_frame_url}
+                                                    alt="Preview"
+                                                    className="thumbnail-preview"
+                                                    onError={(e) => {
+                                                        e.target.style.display = 'none';
+                                                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+                                                    }}
+                                                />
+                                            ) : null}
+                                            <div className="thumbnail-placeholder" style={{ display: (video.thumbnail_url || video.first_frame_url) ? 'none' : 'flex' }}>
+                                                <Clock size={16} />
+                                            </div>
+                                        </div>
+                                    </td>
                                     <td>
-                                        <a href={video.video_page_url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 max-w-xs truncate block" title={video.video_page_url}>
-                                            {video.video_page_url || 'No URL'}
+                                        <a href={video.video_page_url} target="_blank" rel="noopener noreferrer" className="source-link-badge" title={video.video_page_url}>
+                                            View Source Video <ExternalLink size={12} />
                                         </a>
                                     </td>
                                     <td>{video.view_count?.toLocaleString() || '-'}</td>
