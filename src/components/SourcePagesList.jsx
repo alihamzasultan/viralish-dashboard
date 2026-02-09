@@ -211,9 +211,9 @@ const SourcePagesList = () => {
                         <thead>
                             <tr>
                                 <th>Source URL</th>
-                                <th style={{ width: '220px' }}>Posts to Scrape</th>
-                                <th>Status</th>
-                                <th style={{ width: '180px' }}>Actions</th>
+                                <th className="col-posts">Posts to Scrape</th>
+                                <th className="col-status">Status</th>
+                                <th className="col-actions">Actions</th>
                             </tr>
                         </thead>
                         <tbody>

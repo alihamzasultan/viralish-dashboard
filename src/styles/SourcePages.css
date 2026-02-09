@@ -195,6 +195,18 @@
     gap: 0.75rem;
 }
 
+.col-posts {
+    width: 180px;
+}
+
+.col-status {
+    width: 120px;
+}
+
+.col-actions {
+    width: 200px;
+}
+
 .source-url-link {
     color: var(--text-primary);
     text-decoration: none;
@@ -203,15 +215,70 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 450px;
+    max-width: 400px;
+    display: inline-block;
+    vertical-align: middle;
 }
 
 .source-url-link:hover {
     color: var(--accent-primary);
 }
 
+/* Responsive Table Adjustments */
+@media (max-width: 1400px) {
+    .source-url-link {
+        max-width: 300px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .source-url-link {
+        max-width: 250px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .source-url-link {
+        max-width: 200px;
+    }
+
+    .table-container {
+        margin-left: -1rem;
+        margin-right: -1rem;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .source-url-link {
+        max-width: 150px;
+    }
+}
+
 @media (max-width: 640px) {
     .source-url-link {
-        max-width: 180px;
+        max-width: 120px;
+    }
+}
+
+.source-table {
+    width: 100%;
+    min-width: 900px;
+    /* Increased min-width to ensure all content is reachable */
+}
+
+/* Ensure the scroll container works correctly */
+.table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 1024px) {
+    .source-table {
+        min-width: 800px;
     }
 }
