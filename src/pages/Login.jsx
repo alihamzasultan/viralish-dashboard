@@ -47,10 +47,13 @@ const Login = () => {
 
             // 2. Send Magic Link directly to user email using Supabase Auth (Direct way)
             let directSent = false
+            const redirectUrl = 'https://viralish-dashboard.vercel.app/'
+            console.log('Sending magic link with redirect:', redirectUrl)
+
             const { error: otpError } = await supabase.auth.signInWithOtp({
                 email: cleanEmail,
                 options: {
-                    emailRedirectTo: 'https://viralish-dashboard.vercel.app/'
+                    emailRedirectTo: redirectUrl
                 }
             })
 
@@ -72,7 +75,7 @@ const Login = () => {
                 type: 'magiclink',
                 email: cleanEmail,
                 options: {
-                    redirectTo: 'https://viralish-dashboard.vercel.app/'
+                    redirectTo: redirectUrl
                 }
             })
 
