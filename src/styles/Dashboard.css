@@ -23,6 +23,27 @@
     width: 80px;
 }
 
+@media (max-width: 1024px) {
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 50;
+    }
+
+    .sidebar.mobile-open {
+        transform: translateX(0);
+    }
+
+    .sidebar.collapsed {
+        width: 280px;
+        /* Keep full width on mobile even if collapsed state is set */
+    }
+}
+
 .sidebar-header {
     padding: 2rem 1.5rem;
     border-bottom: 1px solid var(--border-color);
@@ -61,6 +82,7 @@
     font-weight: 800;
     background: var(--accent-gradient);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     margin: 0;
     letter-spacing: -0.025em;
@@ -143,6 +165,14 @@
     flex-direction: column;
     overflow: hidden;
     position: relative;
+    min-width: 0;
+    /* Prevent flex Blowout */
+}
+
+@media (max-width: 1024px) {
+    .main-content {
+        width: 100vw;
+    }
 }
 
 .top-bar {
@@ -154,6 +184,47 @@
     justify-content: space-between;
     padding: 0 3rem;
     z-index: 5;
+}
+
+.mobile-menu-btn {
+    display: none;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+}
+
+.mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    z-index: 40;
+}
+
+@media (max-width: 1024px) {
+    .mobile-menu-btn {
+        display: flex;
+    }
+
+    .top-bar {
+        padding: 0 1.5rem;
+    }
+
+    .content-area {
+        padding: 0 1.5rem 2rem 1.5rem;
+    }
+
+    .collapse-btn {
+        display: none;
+        /* Hide collapse btn on mobile as we use drawer */
+    }
 }
 
 .page-title {
@@ -253,6 +324,7 @@
     line-height: 1;
     background: linear-gradient(180deg, #fff 0%, #cbd5e1 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 

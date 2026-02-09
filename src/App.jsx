@@ -7,10 +7,12 @@ import SourceVideoTable from './components/SourceVideoTable'
 import AnalyzedVideoTable from './components/AnalyzedVideoTable'
 import VideoUpload from './components/VideoUpload'
 import CustomVideos from './components/CustomVideos'
+import SourcePagesList from './components/SourcePagesList'
 
 const DashboardHome = () => (
   <>
     <StatsOverview />
+    <SourcePagesList />
     <VideoGrid />
   </>
 )

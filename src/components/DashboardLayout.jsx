@@ -25,8 +25,13 @@ const DashboardLayout = () => {
 
     return (
         <div className="dashboard-container">
+            {/* Mobile Overlay */}
+            {isMobileOpen && (
+                <div className="mobile-overlay" onClick={() => setIsMobileOpen(false)} />
+            )}
+
             {/* Sidebar */}
-            <aside className={clsx('sidebar', isCollapsed && 'collapsed')}>
+            <aside className={clsx('sidebar', isCollapsed && 'collapsed', isMobileOpen && 'mobile-open')}>
                 <div className="sidebar-header">
                     {!isCollapsed && <h1 className="brand-title">Viralish AI</h1>}
                     <button
@@ -62,9 +67,17 @@ const DashboardLayout = () => {
             {/* Main Content */}
             <main className="main-content">
                 <header className="top-bar">
-                    <h2 className="page-title">
-                        {navItems.find((i) => i.path === location.pathname)?.label || 'Dashboard'}
-                    </h2>
+                    <div className="flex items-center space-x-3">
+                        <button
+                            className="mobile-menu-btn"
+                            onClick={() => setIsMobileOpen(!isMobileOpen)}
+                        >
+                            <Menu size={24} />
+                        </button>
+                        <h2 className="page-title">
+                            {navItems.find((i) => i.path === location.pathname)?.label || 'Dashboard'}
+                        </h2>
+                    </div>
                     <div className="flex items-center space-x-4">
                         <div className="user-avatar">
                             VA

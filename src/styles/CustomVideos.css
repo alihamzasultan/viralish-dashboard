@@ -187,6 +187,13 @@
     border-radius: 16px;
 }
 
+@media (max-width: 600px) {
+    .video-outputs {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+}
+
 .video-output-item {
     display: flex;
     flex-direction: column;
