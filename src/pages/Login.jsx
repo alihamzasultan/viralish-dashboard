@@ -43,28 +43,23 @@ const Login = () => {
                 return
             }
 
-            // 2. Generate Magic Link using Admin API (Service Role)
-            const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-            const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+            // 2. Generate Magic Link using Admin API (Service Role) - Silently
+            const { createClient } = await import('@supabase/supabase-js')
+            const supabaseAdmin = createClient(
+                import.meta.env.VITE_SUPABASE_URL,
+                import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY,
+                { auth: { autoRefreshToken: false, persistSession: false } }
+            )
 
-            const linkResponse = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
-                method: 'POST',
-                headers: {
-                    'apikey': serviceRoleKey,
-                    'Authorization': `Bearer ${serviceRoleKey}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    type: 'magiclink',
-                    email: email.toLowerCase().trim(),
-                    options: {
-                        redirectTo: `${window.location.origin}/`
-                    }
-                })
+            const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+                type: 'magiclink',
+                email: email.toLowerCase().trim(),
+                options: {
+                    redirectTo: `${window.location.origin}/`
+                }
             })
 
-            const linkData = await linkResponse.json()
-            if (!linkResponse.ok) throw new Error(linkData.msg || 'Failed to generate magic link')
+            if (linkError) throw linkError
 
             const fullMagicLink = linkData.properties?.action_link || linkData.action_link
 
@@ -76,7 +71,8 @@ const Login = () => {
                 body: JSON.stringify({
                     email: email.toLowerCase().trim(),
                     magicLink: fullMagicLink,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    source: 'frontend-admin-gen'
                 })
             })
 
