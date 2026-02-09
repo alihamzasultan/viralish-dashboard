@@ -60,9 +60,17 @@ const Login = () => {
             })
         } catch (error) {
             console.error('Login error:', error)
+
+            let errorMsg = error.message || 'An error occurred during login.'
+
+            // Handle Supabase default rate limits gracefully
+            if (errorMsg.includes('rate limit')) {
+                errorMsg = 'Email limit reached for this hour. Please wait a few minutes or contact support to increase your threshold.'
+            }
+
             setMessage({
                 type: 'error',
-                text: error.message || 'An error occurred during login.'
+                text: errorMsg
             })
         } finally {
             setLoading(false)
