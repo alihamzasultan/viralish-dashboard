@@ -27,17 +27,10 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Public Route */}
-          <Route path="/login" element={<Login />} />
-
-          {/* Protected Routes */}
+          {/* Main Dashboard - Now Public */}
           <Route
             path="/"
-            element={
-              <ProtectedRoute>
-                <DashboardLayout />
-              </ProtectedRoute>
-            }
+            element={<DashboardLayout />}
           >
             <Route index element={<DashboardHome />} />
             <Route path="generated" element={<VideoGrid />} />

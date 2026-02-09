@@ -64,14 +64,7 @@ const DashboardLayout = () => {
                     })}
                 </nav>
                 <div className="sidebar-footer">
-                    <button
-                        className="settings-btn"
-                        onClick={signOut}
-                        title={isCollapsed ? "Log Out" : ""}
-                    >
-                        <LogOut size={20} />
-                        {!isCollapsed && <span>Log Out</span>}
-                    </button>
+                    {/* Public Mode: No Log Out needed */}
                 </div>
             </aside>
 
@@ -90,9 +83,7 @@ const DashboardLayout = () => {
                         </h2>
                     </div>
                     <div className="flex items-center space-x-4">
-                        <div className="user-avatar" title={user?.email}>
-                            {userInitial}
-                        </div>
+                        {/* Public Mode: No avatar needed */}
                     </div>
                 </header>
                 <div className="content-area">
