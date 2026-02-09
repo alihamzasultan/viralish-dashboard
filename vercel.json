@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/n8n/(.*)",
+      "destination": "https://viralish.app.n8n.cloud/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
