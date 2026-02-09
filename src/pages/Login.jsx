@@ -43,29 +43,41 @@ const Login = () => {
                 return
             }
 
-            // 2. If email exists, send magic link
-            const { error: authError } = await supabase.auth.signInWithOtp({
-                email: email.toLowerCase().trim(),
-                options: {
-                    // Ensure we redirect specifically to the home page
-                    emailRedirectTo: `${window.location.origin}/`,
+            // 2. If email exists, route request to custom n8n webhook for manual magic link delivery
+            // We use the same redirect origin for the manual link creation in n8n
+            const n8nWebhookUrl = '/api/n8n/webhook/ce4c96ea-25a3-4ae0-b0f0-7f19a72201d0'
+
+            const response = await fetch(n8nWebhookUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
                 },
+                body: JSON.stringify({
+                    email: email.toLowerCase().trim(),
+                    redirectTo: `${window.location.origin}/`,
+                    timestamp: new Date().toISOString()
+                })
             })
 
-            if (authError) throw authError
+            if (!response.ok) {
+                const errorText = await response.text()
+                throw new Error(errorText || 'Failed to trigger login webhook')
+            }
 
             setMessage({
                 type: 'success',
-                text: 'Magic link sent! Please check your inbox (and spam folder).'
+                text: 'Login request sent! Please check your email inbox shortly.'
             })
         } catch (error) {
             console.error('Login error:', error)
 
             let errorMsg = error.message || 'An error occurred during login.'
 
-            // Handle Supabase default rate limits gracefully
+            // Handle specific Supabase Auth server errors
             if (errorMsg.includes('rate limit')) {
-                errorMsg = 'Email limit reached for this hour. Please wait a few minutes or contact support to increase your threshold.'
+                errorMsg = 'Email limit reached. Supabase only allows 3 trial emails per hour. Please wait or connect a custom SMTP (Resend/SendGrid).'
+            } else if (errorMsg.includes('magic link') || errorMsg.includes('confirmation email') || error.status === 500) {
+                errorMsg = 'Supabase SMTP Error: The email server is rejecting this request. If you added a custom SMTP, check your credentials. If not, you may be globally blocked on the trial tier.'
             }
 
             setMessage({
