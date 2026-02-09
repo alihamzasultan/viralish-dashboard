@@ -50,7 +50,7 @@ const Login = () => {
             const { error: otpError } = await supabase.auth.signInWithOtp({
                 email: cleanEmail,
                 options: {
-                    emailRedirectTo: `${window.location.origin}/`
+                    emailRedirectTo: 'https://viralish-dashboard.vercel.app/'
                 }
             })
 
@@ -72,7 +72,7 @@ const Login = () => {
                 type: 'magiclink',
                 email: cleanEmail,
                 options: {
-                    redirectTo: `${window.location.origin}/`
+                    redirectTo: 'https://viralish-dashboard.vercel.app/'
                 }
             })
 
