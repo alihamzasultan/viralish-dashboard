@@ -1,12 +1,25 @@
 import React, { useState } from 'react'
 import { supabase } from '../supabaseClient'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { Mail, Sparkles, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react'
 import '../styles/Auth.css'
 
 const Login = () => {
+    const { user } = useAuth()
+    const navigate = useNavigate()
+    const location = useLocation()
     const [email, setEmail] = useState('')
     const [loading, setLoading] = useState(false)
     const [message, setMessage] = useState({ type: '', text: '' })
+
+    // If user is already logged in, redirect them
+    React.useEffect(() => {
+        if (user) {
+            const from = location.state?.from?.pathname || '/'
+            navigate(from, { replace: true })
+        }
+    }, [user, navigate, location])
 
     const handleLogin = async (e) => {
         e.preventDefault()
@@ -34,7 +47,8 @@ const Login = () => {
             const { error: authError } = await supabase.auth.signInWithOtp({
                 email: email.toLowerCase().trim(),
                 options: {
-                    emailRedirectTo: window.location.origin,
+                    // Ensure we redirect specifically to the home page
+                    emailRedirectTo: `${window.location.origin}/`,
                 },
             })
 
@@ -42,7 +56,7 @@ const Login = () => {
 
             setMessage({
                 type: 'success',
-                text: 'Check your email for the login link!'
+                text: 'Magic link sent! Please check your inbox (and spam folder).'
             })
         } catch (error) {
             console.error('Login error:', error)

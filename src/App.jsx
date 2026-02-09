@@ -11,9 +11,11 @@ import AnalyzedVideoTable from './components/AnalyzedVideoTable'
 import VideoUpload from './components/VideoUpload'
 import CustomVideos from './components/CustomVideos'
 import SourcePagesList from './components/SourcePagesList'
+import ScraperStatus from './components/ScraperStatus'
 
 const DashboardHome = () => (
   <>
+    <ScraperStatus />
     <StatsOverview />
     <SourcePagesList />
     <VideoGrid />
