@@ -43,25 +43,46 @@ const Login = () => {
                 return
             }
 
-            // 2. If email exists, route request to custom n8n webhook for manual magic link delivery
-            // We use the same redirect origin for the manual link creation in n8n
-            const n8nWebhookUrl = '/api/n8n/webhook/ce4c96ea-25a3-4ae0-b0f0-7f19a72201d0'
+            // 2. Generate Magic Link using Admin API (Service Role)
+            const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+            const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
 
-            const response = await fetch(n8nWebhookUrl, {
+            const linkResponse = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
                 method: 'POST',
                 headers: {
+                    'apikey': serviceRoleKey,
+                    'Authorization': `Bearer ${serviceRoleKey}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
+                    type: 'magiclink',
                     email: email.toLowerCase().trim(),
-                    redirectTo: `${window.location.origin}/`,
+                    options: {
+                        redirectTo: `${window.location.origin}/`
+                    }
+                })
+            })
+
+            const linkData = await linkResponse.json()
+            if (!linkResponse.ok) throw new Error(linkData.msg || 'Failed to generate magic link')
+
+            const fullMagicLink = linkData.properties?.action_link || linkData.action_link
+
+            // 3. Send the full link to n8n webhook
+            const n8nWebhookUrl = '/api/n8n/webhook/ce4c96ea-25a3-4ae0-b0f0-7f19a72201d0'
+            const n8nResponse = await fetch(n8nWebhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: email.toLowerCase().trim(),
+                    magicLink: fullMagicLink,
                     timestamp: new Date().toISOString()
                 })
             })
 
-            if (!response.ok) {
-                const errorText = await response.text()
-                throw new Error(errorText || 'Failed to trigger login webhook')
+            if (!n8nResponse.ok) {
+                const errorText = await n8nResponse.text()
+                throw new Error(errorText || 'Failed to send link to n8n')
             }
 
             setMessage({
