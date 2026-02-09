@@ -1,11 +1,13 @@
 import React from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Video, Database, Settings, Brain, ChevronLeft, ChevronRight, Menu, Upload, Sparkles } from 'lucide-react'
+import { LayoutDashboard, Video, Database, Settings, Brain, ChevronLeft, ChevronRight, Menu, Upload, Sparkles, LogOut } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 import clsx from 'clsx'
 import '../styles/Dashboard.css'
 
 const DashboardLayout = () => {
     const location = useLocation()
+    const { user, signOut } = useAuth()
     const [isCollapsed, setIsCollapsed] = React.useState(false)
     const [isMobileOpen, setIsMobileOpen] = React.useState(false)
 
@@ -22,6 +24,8 @@ const DashboardLayout = () => {
         { label: 'My Generations', path: '/custom', icon: Sparkles },
         { label: 'Upload Video', path: '/upload', icon: Upload },
     ]
+
+    const userInitial = user?.email?.charAt(0).toUpperCase() || 'V'
 
     return (
         <div className="dashboard-container">
@@ -60,7 +64,14 @@ const DashboardLayout = () => {
                     })}
                 </nav>
                 <div className="sidebar-footer">
-                    {/* Settings removed as per request */}
+                    <button
+                        className="settings-btn"
+                        onClick={signOut}
+                        title={isCollapsed ? "Log Out" : ""}
+                    >
+                        <LogOut size={20} />
+                        {!isCollapsed && <span>Log Out</span>}
+                    </button>
                 </div>
             </aside>
 
@@ -79,8 +90,8 @@ const DashboardLayout = () => {
                         </h2>
                     </div>
                     <div className="flex items-center space-x-4">
-                        <div className="user-avatar">
-                            VA
+                        <div className="user-avatar" title={user?.email}>
+                            {userInitial}
                         </div>
                     </div>
                 </header>
