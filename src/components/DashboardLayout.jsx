@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Video, Database, Settings, Brain, ChevronLeft, ChevronRight, Menu, Upload, Sparkles, LogOut } from 'lucide-react'
+import { LayoutDashboard, Video, Database, Settings, Globe, ChevronLeft, ChevronRight, Menu, Upload, Sparkles, LogOut } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import clsx from 'clsx'
 import '../styles/Dashboard.css'
@@ -20,9 +20,9 @@ const DashboardLayout = () => {
         { label: 'Overview', path: '/', icon: LayoutDashboard },
         { label: 'Generated Videos', path: '/generated', icon: Video },
         { label: 'Source Videos', path: '/sources', icon: Database },
-        { label: 'Analyzed Videos', path: '/analyzed', icon: Brain },
+        { label: 'Source Pages', path: '/pages', icon: Globe },
         { label: 'My Generations', path: '/custom', icon: Sparkles },
-        { label: 'Upload Video', path: '/upload', icon: Upload },
+        { label: 'Import Video', path: '/upload', icon: Upload },
     ]
 
     const userInitial = user?.email?.charAt(0).toUpperCase() || 'V'

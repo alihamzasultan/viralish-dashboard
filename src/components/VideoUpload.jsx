@@ -1,79 +1,20 @@
-import React, { useState, useRef } from 'react'
-import { Upload, X, CheckCircle, AlertCircle, FileVideo, Loader } from 'lucide-react'
+import React, { useState } from 'react'
+import { Upload, Link, Loader, CheckCircle, AlertCircle } from 'lucide-react'
 import '../styles/VideoUpload.css'
 
 const VideoUpload = () => {
-    const [file, setFile] = useState(null)
-    const [isDragging, setIsDragging] = useState(false)
+    const [reelUrl, setReelUrl] = useState('')
     const [uploading, setUploading] = useState(false)
-    const [status, setStatus] = useState(null) // 'success' | 'error' | null
-    const [message, setMessage] = useState('')
     const [responseJson, setResponseJson] = useState(null)
-    const fileInputRef = useRef(null)
 
     // Use local proxy to avoid CORS issues
     const webhookUrl = '/api/n8n/webhook/ed9165ec-7dc6-4fcd-a4b8-2492b6aab8d0'
 
-    const handleDragOver = (e) => {
-        e.preventDefault()
-        setIsDragging(true)
-    }
-
-    const handleDragLeave = (e) => {
-        e.preventDefault()
-        setIsDragging(false)
-    }
-
-    const handleDrop = (e) => {
-        e.preventDefault()
-        setIsDragging(false)
-        const droppedFiles = e.dataTransfer.files
-
-        if (droppedFiles.length > 0) {
-            validateAndSetFile(droppedFiles[0])
-        }
-    }
-
-    const validateAndSetFile = (selectedFile) => {
-        // Reset status
-        setStatus(null)
-        setMessage('')
-
-        // Check if file is a video
-        if (!selectedFile.type.startsWith('video/')) {
-            setStatus('error')
-            setMessage('Please upload a valid video file.')
-            return
-        }
-
-        setFile(selectedFile)
-    }
-
-    const handleFileSelect = (e) => {
-        if (e.target.files.length > 0) {
-            validateAndSetFile(e.target.files[0])
-        }
-    }
-
-    const removeFile = () => {
-        setFile(null)
-        setStatus(null)
-        setMessage('')
-        if (fileInputRef.current) {
-            fileInputRef.current.value = ''
-        }
-    }
-
     const handleUpload = async () => {
-        if (!file) return
+        if (!reelUrl) return
 
         setUploading(true)
         setResponseJson(null)
-
-        const formData = new FormData()
-        formData.append('file', file)
-        formData.append('filename', file.name)
-        formData.append('type', file.type)
 
         try {
             // 25 minute timeout
@@ -82,7 +23,10 @@ const VideoUpload = () => {
 
             const response = await fetch(webhookUrl, {
                 method: 'POST',
-                body: formData,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ url: reelUrl }),
                 signal: controller.signal
             })
 
@@ -106,8 +50,7 @@ const VideoUpload = () => {
                 setResponseJson(text)
             }
 
-            setFile(null)
-            if (fileInputRef.current) fileInputRef.current.value = ''
+            setReelUrl('')
 
         } catch (error) {
             console.error('Upload error:', error)
@@ -117,57 +60,41 @@ const VideoUpload = () => {
         }
     }
 
-    const formatFileSize = (bytes) => {
-        if (bytes === 0) return '0 Bytes'
-        const k = 1024
-        const sizes = ['Bytes', 'KB', 'MB', 'GB']
-        const i = Math.floor(Math.log(bytes) / Math.log(k))
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-    }
-
     return (
         <div className="upload-container">
-            <h2 className="section-title">Upload Video</h2>
+            <h2 className="section-title">Import from Facebook Reel</h2>
 
             <div className="upload-card">
-                {!file ? (
-                    <div
-                        className={`upload-area ${isDragging ? 'drag-active' : ''}`}
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                        onDrop={handleDrop}
-                        onClick={() => fileInputRef.current?.click()}
-                    >
+                <div className="url-input-container" style={{ marginBottom: '1.5rem' }}>
+                    <label htmlFor="reel-url" className="input-label" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, color: '#e5e7eb' }}>
+                        Facebook Reel URL
+                    </label>
+                    <div className="input-wrapper" style={{ position: 'relative' }}>
+                        <div className="input-icon" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }}>
+                            <Link size={20} />
+                        </div>
                         <input
-                            type="file"
-                            ref={fileInputRef}
-                            style={{ display: 'none' }}
-                            accept="video/*"
-                            onChange={handleFileSelect}
-                        />
-                        <Upload size={48} className="upload-icon" />
-                        <span className="upload-text">Click to upload or drag and drop</span>
-                        <span className="upload-subtext">MP4, MOV, or WEBM (Max size dependent on server)</span>
-                    </div>
-                ) : (
-                    <div className="selected-file">
-                        <div className="p-3 bg-gray-800 rounded-lg">
-                            <FileVideo size={24} className="text-blue-400" />
-                        </div>
-                        <div className="file-info">
-                            <span className="file-name">{file.name}</span>
-                            <span className="file-size">{formatFileSize(file.size)}</span>
-                        </div>
-                        <button
-                            className="remove-file-btn"
-                            onClick={removeFile}
+                            id="reel-url"
+                            type="url"
+                            value={reelUrl}
+                            onChange={(e) => setReelUrl(e.target.value)}
+                            placeholder="https://www.facebook.com/reel/..."
+                            className="url-input"
+                            style={{
+                                width: '100%',
+                                padding: '0.75rem 1rem 0.75rem 3rem',
+                                borderRadius: '0.5rem',
+                                border: '1px solid #374151',
+                                backgroundColor: '#1f2937',
+                                color: '#fff',
+                                fontSize: '1rem',
+                                outline: 'none',
+                                transition: 'border-color 0.2s'
+                            }}
                             disabled={uploading}
-                            title="Remove file"
-                        >
-                            <X size={20} />
-                        </button>
+                        />
                     </div>
-                )}
+                </div>
 
                 {/* Show loading spinner while uploading */}
                 {uploading && (
@@ -193,14 +120,14 @@ const VideoUpload = () => {
                     <button
                         className="btn-primary"
                         onClick={handleUpload}
-                        disabled={!file || uploading}
+                        disabled={!reelUrl || uploading}
                     >
                         {uploading ? (
                             <>Processing...</>
                         ) : (
                             <>
                                 <Upload size={18} />
-                                Upload Video
+                                Import Video
                             </>
                         )}
                     </button>
@@ -208,10 +135,11 @@ const VideoUpload = () => {
             </div>
 
             <div className="mt-8 text-sm text-gray-500 text-center">
-                <p>Videos upload directly to the processing workflow.</p>
+                <p>Provide a Facebook Reel URL to start the processing workflow.</p>
             </div>
         </div>
     )
 }
 
 export default VideoUpload
+

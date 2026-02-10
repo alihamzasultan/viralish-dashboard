@@ -6,6 +6,7 @@ import '../styles/CustomVideos.css'
 const CustomVideos = () => {
     const [videos, setVideos] = useState([])
     const [loading, setLoading] = useState(true)
+    const [activeTab, setActiveTab] = useState('completed')
     const [uploadingToPortal, setUploadingToPortal] = useState({}) // track loading per video URL
 
     const portalWebhookUrl = '/api/n8n/webhook/dd407330-7555-472e-bcda-0b35994e1b16'
@@ -90,147 +91,212 @@ const CustomVideos = () => {
             <div className="empty-state">
                 <Sparkles size={56} style={{ color: '#6366f1', marginBottom: '1.5rem' }} />
                 <h3>No Generations Yet</h3>
-                <p>Upload a video to start generating AI content.</p>
+                <p>Import a video to start generating AI content.</p>
             </div>
         )
     }
 
+    const pendingVideos = videos.filter(v => ['pending', 'started', 'prompts-done'].includes(v.generation_status))
+    const failedVideos = videos.filter(v => v.generation_status === 'failed')
+    const completedVideos = videos.filter(v => v.generation_status === 'done' || (v.seedance_output_url && v.kling_output_url))
+
+    const displayedVideos = activeTab === 'pending' ? pendingVideos : activeTab === 'failed' ? failedVideos : completedVideos
+
     return (
         <div className="custom-videos-container">
-            <div className="custom-videos-grid">
-                {videos.map((video) => (
-                    <div key={video.id} className="custom-video-card">
-                        {/* Header */}
-                        <div className="card-header">
-                            <div className="card-meta">
-                                <span className="card-id">Generation #{video.id}</span>
-                                <h3 className="video-title-text">{video.video_title || 'Untitled Video'}</h3>
-                                <span className="card-date">{formatDate(video.created_at)}</span>
-                            </div>
-                            {getStatusBadge(video.generation_status)}
-                        </div>
+            <div className="video-grid-header" style={{ marginBottom: '2rem' }}>
+                <div className="header-text">
+                    <h2 className="section-title">
+                        {activeTab === 'pending' ? 'Processing Queue' : activeTab === 'failed' ? 'Failed Generations' : 'My Generations'}
+                    </h2>
+                    <p className="section-subtitle">
+                        {activeTab === 'pending'
+                            ? 'Tracking active generation processes'
+                            : activeTab === 'failed'
+                                ? 'Review generations that encountered errors'
+                                : 'Manage your custom AI generated videos'}
+                    </p>
+                </div>
 
-                        {/* Content */}
-                        {(video.seedance_output_url || video.kling_output_url || video.generation_status === 'done' || video.generation_status === 'failed') ? (
-                            <div className="video-outputs">
-                                {/* Seedance Output */}
-                                {video.seedance_output_url ? (
-                                    <div className="video-output-item">
-                                        <div className="video-wrapper">
-                                            <div className="video-label">Seedance</div>
-                                            <video src={video.seedance_output_url} controls />
-                                        </div>
-                                        <div className="output-actions">
-                                            <button
-                                                className={`btn-upload-small ${uploadingToPortal[video.seedance_output_url] ? 'uploading' : ''}`}
-                                                onClick={() => handlePortalUpload(video.seedance_output_url, video.id, video.video_title)}
-                                                disabled={uploadingToPortal[video.seedance_output_url]}
-                                            >
-                                                {uploadingToPortal[video.seedance_output_url] ? (
-                                                    <Loader size={14} className="spin" />
-                                                ) : (
-                                                    <Upload size={14} />
-                                                )}
-                                                {uploadingToPortal[video.seedance_output_url] ? 'Uploading...' : 'Upload'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="video-output-item pending">
-                                        <div className="video-label">Seedance</div>
-                                        <div className="output-status">
-                                            {video.generation_status === 'failed' ? (
-                                                <span className="status-failed"><AlertCircle size={14} /> Generation Failed</span>
-                                            ) : (
-                                                <span className="status-pending"><Loader size={14} className="spin" /> Generating...</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Kling Output */}
-                                {video.kling_output_url ? (
-                                    <div className="video-output-item">
-                                        <div className="video-wrapper">
-                                            <div className="video-label">Kling</div>
-                                            <video src={video.kling_output_url} controls />
-                                        </div>
-                                        <div className="output-actions">
-                                            <button
-                                                className={`btn-upload-small ${uploadingToPortal[video.kling_output_url] ? 'uploading' : ''}`}
-                                                onClick={() => handlePortalUpload(video.kling_output_url, video.id, video.video_title)}
-                                                disabled={uploadingToPortal[video.kling_output_url]}
-                                            >
-                                                {uploadingToPortal[video.kling_output_url] ? (
-                                                    <Loader size={14} className="spin" />
-                                                ) : (
-                                                    <Upload size={14} />
-                                                )}
-                                                {uploadingToPortal[video.kling_output_url] ? 'Uploading...' : 'Upload'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="video-output-item pending">
-                                        <div className="video-label">Kling</div>
-                                        <div className="output-status">
-                                            {video.generation_status === 'failed' ? (
-                                                <span className="status-failed"><AlertCircle size={14} /> Generation Failed</span>
-                                            ) : (
-                                                <span className="status-pending"><Loader size={14} className="spin" /> Generating...</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        ) : video.generation_status === 'failed' ? (
-                            <div className="processing-placeholder failed">
-                                <div className="processing-icon failed">
-                                    <AlertCircle size={24} style={{ color: '#ef4444' }} />
-                                </div>
-                                <p className="processing-text" style={{ color: '#f87171' }}>
-                                    Generation failed.\nPlease try uploading again.
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="processing-placeholder">
-                                <div className="processing-icon">
-                                    <Loader size={24} className="spin" style={{ color: '#8b5cf6' }} />
-                                </div>
-                                <p className="processing-text">
-                                    {video.generation_status === 'started' && 'Generating prompts...\nThis may take a few minutes.'}
-                                    {video.generation_status === 'prompts-done' && 'Generating video outputs...\nAlmost there!'}
-                                    {!video.generation_status && 'Waiting to start processing...'}
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Posted Status */}
-                        {(video.posted || (video.post_url && video.post_url.includes('upload-failed'))) && (
-                            <div className="posted-status-footer">
-                                {video.post_url && video.post_url.includes('upload-failed') ? (
-                                    <div className="posted-status-item failed">
-                                        <AlertCircle size={14} />
-                                        <span>Portal upload failed. Please try again.</span>
-                                    </div>
-                                ) : (
-                                    <div className="posted-status-item success">
-                                        <div className="status-info">
-                                            <CheckCircle size={14} />
-                                            <span>Posted {video.posted_at && `on ${formatDate(video.posted_at)}`}</span>
-                                        </div>
-                                        {video.post_url && (
-                                            <a href={video.post_url} target="_blank" rel="noopener noreferrer" className="view-post-link">
-                                                View Post <Share2 size={12} />
-                                            </a>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                ))}
+                <div className="video-tabs">
+                    <button
+                        onClick={() => setActiveTab('completed')}
+                        className={`tab-btn ${activeTab === 'completed' ? 'active' : ''}`}
+                    >
+                        Completed
+                        <span className="tab-count">{completedVideos.length}</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('pending')}
+                        className={`tab-btn ${activeTab === 'pending' ? 'active' : ''}`}
+                    >
+                        Pending
+                        <span className="tab-count">{pendingVideos.length}</span>
+                        {pendingVideos.length > 0 && <span className="pending-dot" />}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('failed')}
+                        className={`tab-btn ${activeTab === 'failed' ? 'active' : ''}`}
+                    >
+                        Failed
+                        <span className="tab-count">{failedVideos.length}</span>
+                        {failedVideos.length > 0 && <span className="failed-dot" style={{ width: '8px', height: '8px', backgroundColor: '#ef4444', borderRadius: '50%' }} />}
+                    </button>
+                </div>
             </div>
+
+            {displayedVideos.length === 0 ? (
+                <div className="empty-state">
+                    <Sparkles size={56} style={{ color: '#6366f1', marginBottom: '1.5rem', opacity: 0.5 }} />
+                    <h3>No {activeTab} Generations</h3>
+                    <p>
+                        {activeTab === 'pending'
+                            ? 'No videos are currently being generated.'
+                            : activeTab === 'failed'
+                                ? 'No failed generations found.'
+                                : 'Import a video to start generating AI content.'}
+                    </p>
+                </div>
+            ) : (
+                <div className="custom-videos-grid">
+                    {displayedVideos.map((video) => (
+                        <div key={video.id} className="custom-video-card">
+                            {/* Header */}
+                            <div className="card-header">
+                                <div className="card-meta">
+                                    <span className="card-id">Generation #{video.id}</span>
+                                    <h3 className="video-title-text">{video.video_title || 'Untitled Video'}</h3>
+                                    <span className="card-date">{formatDate(video.created_at)}</span>
+                                </div>
+                                {getStatusBadge(video.generation_status)}
+                            </div>
+
+                            {/* Content */}
+                            {(video.seedance_output_url || video.kling_output_url || video.generation_status === 'done' || video.generation_status === 'failed') ? (
+                                <div className="video-outputs">
+                                    {/* Seedance Output */}
+                                    {video.seedance_output_url ? (
+                                        <div className="video-output-item">
+                                            <div className="video-wrapper">
+                                                <div className="video-label">Seedance</div>
+                                                <video src={video.seedance_output_url} controls />
+                                            </div>
+                                            <div className="output-actions">
+                                                <button
+                                                    className={`btn-upload-small ${uploadingToPortal[video.seedance_output_url] ? 'uploading' : ''}`}
+                                                    onClick={() => handlePortalUpload(video.seedance_output_url, video.id, video.video_title)}
+                                                    disabled={uploadingToPortal[video.seedance_output_url]}
+                                                >
+                                                    {uploadingToPortal[video.seedance_output_url] ? (
+                                                        <Loader size={14} className="spin" />
+                                                    ) : (
+                                                        <Upload size={14} />
+                                                    )}
+                                                    {uploadingToPortal[video.seedance_output_url] ? 'Uploading...' : 'Upload'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="video-output-item">
+                                            <div className="video-wrapper">
+                                                <div className="video-label">Seedance</div>
+                                                <div className="video-placeholder-content">
+                                                    {video.generation_status === 'failed' ? (
+                                                        <><AlertCircle size={20} /><span>Generation Failed</span></>
+                                                    ) : (
+                                                        <><Loader size={20} className="spin" /><span>Generating...</span></>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Kling Output */}
+                                    {video.kling_output_url ? (
+                                        <div className="video-output-item">
+                                            <div className="video-wrapper">
+                                                <div className="video-label">Kling</div>
+                                                <video src={video.kling_output_url} controls />
+                                            </div>
+                                            <div className="output-actions">
+                                                <button
+                                                    className={`btn-upload-small ${uploadingToPortal[video.kling_output_url] ? 'uploading' : ''}`}
+                                                    onClick={() => handlePortalUpload(video.kling_output_url, video.id, video.video_title)}
+                                                    disabled={uploadingToPortal[video.kling_output_url]}
+                                                >
+                                                    {uploadingToPortal[video.kling_output_url] ? (
+                                                        <Loader size={14} className="spin" />
+                                                    ) : (
+                                                        <Upload size={14} />
+                                                    )}
+                                                    {uploadingToPortal[video.kling_output_url] ? 'Uploading...' : 'Upload'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="video-output-item">
+                                            <div className="video-wrapper">
+                                                <div className="video-label">Kling</div>
+                                                <div className="video-placeholder-content">
+                                                    {video.generation_status === 'failed' ? (
+                                                        <><AlertCircle size={20} /><span>Generation Failed</span></>
+                                                    ) : (
+                                                        <><Loader size={20} className="spin" /><span>Generating...</span></>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : video.generation_status === 'failed' ? (
+                                <div className="processing-placeholder failed">
+                                    <div className="processing-icon failed">
+                                        <AlertCircle size={24} style={{ color: '#ef4444' }} />
+                                    </div>
+                                    <p className="processing-text" style={{ color: '#f87171' }}>
+                                        Generation failed.\nPlease try uploading again.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="processing-placeholder">
+                                    <div className="processing-icon">
+                                        <Loader size={24} className="spin" style={{ color: '#8b5cf6' }} />
+                                    </div>
+                                    <p className="processing-text">
+                                        {video.generation_status === 'started' && 'Generating prompts...\nThis may take a few minutes.'}
+                                        {video.generation_status === 'prompts-done' && 'Generating video outputs...\nAlmost there!'}
+                                        {!video.generation_status && 'Waiting to start processing...'}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Posted Status */}
+                            {(video.posted || (video.post_url && video.post_url.includes('upload-failed'))) && (
+                                <div className="posted-status-footer">
+                                    {video.post_url && video.post_url.includes('upload-failed') ? (
+                                        <div className="posted-status-item failed">
+                                            <AlertCircle size={14} />
+                                            <span>Portal upload failed. Please try again.</span>
+                                        </div>
+                                    ) : (
+                                        <div className="posted-status-item success">
+                                            <div className="status-info">
+                                                <CheckCircle size={14} />
+                                                <span>Posted {video.posted_at && `on ${formatDate(video.posted_at)}`}</span>
+                                            </div>
+                                            {video.post_url && (
+                                                <a href={video.post_url} target="_blank" rel="noopener noreferrer" className="view-post-link">
+                                                    View Post <Share2 size={12} />
+                                                </a>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     )
 }
