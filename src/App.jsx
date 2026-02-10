@@ -7,7 +7,6 @@ import Login from './pages/Login'
 import StatsOverview from './components/StatsOverview'
 import VideoGrid from './components/VideoGrid'
 import SourceVideoTable from './components/SourceVideoTable'
-import AnalyzedVideoTable from './components/AnalyzedVideoTable'
 import VideoUpload from './components/VideoUpload'
 import CustomVideos from './components/CustomVideos'
 import SourcePagesList from './components/SourcePagesList'
@@ -17,7 +16,6 @@ const DashboardHome = () => (
   <>
     <ScraperStatus />
     <StatsOverview />
-    <SourcePagesList />
     <VideoGrid />
   </>
 )
@@ -35,7 +33,7 @@ function App() {
             <Route index element={<DashboardHome />} />
             <Route path="generated" element={<VideoGrid />} />
             <Route path="sources" element={<SourceVideoTable />} />
-            <Route path="analyzed" element={<AnalyzedVideoTable />} />
+            <Route path="pages" element={<SourcePagesList />} />
             <Route path="upload" element={<VideoUpload />} />
             <Route path="custom" element={<CustomVideos />} />
           </Route>
