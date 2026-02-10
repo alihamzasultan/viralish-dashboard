@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
-import { Clock, CheckCircle, Loader, Upload, Sparkles, AlertCircle, Share2 } from 'lucide-react'
+import { Clock, CheckCircle, Loader, Upload, Sparkles, AlertCircle, Share2, Maximize2 } from 'lucide-react'
+import FullscreenVideoModal from './FullscreenVideoModal'
 import '../styles/CustomVideos.css'
 
 const CustomVideos = () => {
     const [videos, setVideos] = useState([])
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState('completed')
+    const [uploadErrors, setUploadErrors] = useState({}) // track errors per video URL
     const [uploadingToPortal, setUploadingToPortal] = useState({}) // track loading per video URL
+    const [fullscreenVideo, setFullscreenVideo] = useState({ isOpen: false, url: '', title: '' })
 
     const portalWebhookUrl = '/api/n8n/webhook/dd407330-7555-472e-bcda-0b35994e1b16'
 
@@ -33,6 +36,8 @@ const CustomVideos = () => {
 
     const handlePortalUpload = async (videoUrl, id, videoTitle) => {
         setUploadingToPortal(prev => ({ ...prev, [videoUrl]: true }))
+        setUploadErrors(prev => ({ ...prev, [videoUrl]: null })) // Clear any previous error
+
         try {
             const response = await fetch(portalWebhookUrl, {
                 method: 'POST',
@@ -50,7 +55,7 @@ const CustomVideos = () => {
             alert('✅ Video sent to portal successfully!')
         } catch (error) {
             console.error('Error uploading to portal:', error)
-            alert('❌ Failed to upload to portal. Please try again.')
+            setUploadErrors(prev => ({ ...prev, [videoUrl]: 'Portal upload failed. Please try again.' }))
         } finally {
             setUploadingToPortal(prev => ({ ...prev, [videoUrl]: false }))
         }
@@ -104,6 +109,13 @@ const CustomVideos = () => {
 
     return (
         <div className="custom-videos-container">
+            <FullscreenVideoModal
+                isOpen={fullscreenVideo.isOpen}
+                videoUrl={fullscreenVideo.url}
+                title={fullscreenVideo.title}
+                onClose={() => setFullscreenVideo({ ...fullscreenVideo, isOpen: false })}
+            />
+
             <div className="video-grid-header" style={{ marginBottom: '2rem' }}>
                 <div className="header-text">
                     <h2 className="section-title">
@@ -179,7 +191,26 @@ const CustomVideos = () => {
                                         <div className="video-output-item">
                                             <div className="video-wrapper">
                                                 <div className="video-label">Seedance</div>
-                                                <video src={video.seedance_output_url} controls />
+                                                <video
+                                                    src={video.seedance_output_url}
+                                                    className="video-element"
+                                                    preload="metadata"
+                                                />
+                                                <div className="video-overlay-actions">
+                                                    <button
+                                                        className="full-screen-btn"
+                                                        onClick={() =>
+                                                            setFullscreenVideo({
+                                                                isOpen: true,
+                                                                url: video.seedance_output_url,
+                                                                title: `${video.video_title || 'Untitled Video'} - Seedance`
+                                                            })
+                                                        }
+                                                    >
+                                                        <Maximize2 size={16} />
+                                                        Full View
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div className="output-actions">
                                                 <button
@@ -192,8 +223,14 @@ const CustomVideos = () => {
                                                     ) : (
                                                         <Upload size={14} />
                                                     )}
-                                                    {uploadingToPortal[video.seedance_output_url] ? 'Uploading...' : 'Upload'}
+                                                    {uploadingToPortal[video.seedance_output_url] ? 'Scheduling...' : 'Schedule Post'}
                                                 </button>
+                                                {uploadErrors[video.seedance_output_url] && (
+                                                    <div className="upload-error-msg">
+                                                        <AlertCircle size={12} />
+                                                        <span>{uploadErrors[video.seedance_output_url]}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     ) : (
@@ -216,7 +253,26 @@ const CustomVideos = () => {
                                         <div className="video-output-item">
                                             <div className="video-wrapper">
                                                 <div className="video-label">Kling</div>
-                                                <video src={video.kling_output_url} controls />
+                                                <video
+                                                    src={video.kling_output_url}
+                                                    className="video-element"
+                                                    preload="metadata"
+                                                />
+                                                <div className="video-overlay-actions">
+                                                    <button
+                                                        className="full-screen-btn"
+                                                        onClick={() =>
+                                                            setFullscreenVideo({
+                                                                isOpen: true,
+                                                                url: video.kling_output_url,
+                                                                title: `${video.video_title || 'Untitled Video'} - Kling`
+                                                            })
+                                                        }
+                                                    >
+                                                        <Maximize2 size={16} />
+                                                        Full View
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div className="output-actions">
                                                 <button
@@ -229,8 +285,14 @@ const CustomVideos = () => {
                                                     ) : (
                                                         <Upload size={14} />
                                                     )}
-                                                    {uploadingToPortal[video.kling_output_url] ? 'Uploading...' : 'Upload'}
+                                                    {uploadingToPortal[video.kling_output_url] ? 'Scheduling...' : 'Schedule Post'}
                                                 </button>
+                                                {uploadErrors[video.kling_output_url] && (
+                                                    <div className="upload-error-msg">
+                                                        <AlertCircle size={12} />
+                                                        <span>{uploadErrors[video.kling_output_url]}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     ) : (
@@ -271,26 +333,19 @@ const CustomVideos = () => {
                             )}
 
                             {/* Posted Status */}
-                            {(video.posted || (video.post_url && video.post_url.includes('upload-failed'))) && (
+                            {video.posted && (
                                 <div className="posted-status-footer">
-                                    {video.post_url && video.post_url.includes('upload-failed') ? (
-                                        <div className="posted-status-item failed">
-                                            <AlertCircle size={14} />
-                                            <span>Portal upload failed. Please try again.</span>
+                                    <div className="posted-status-item success">
+                                        <div className="status-info">
+                                            <CheckCircle size={14} />
+                                            <span>Posted {video.posted_at && `on ${formatDate(video.posted_at)}`}</span>
                                         </div>
-                                    ) : (
-                                        <div className="posted-status-item success">
-                                            <div className="status-info">
-                                                <CheckCircle size={14} />
-                                                <span>Posted {video.posted_at && `on ${formatDate(video.posted_at)}`}</span>
-                                            </div>
-                                            {video.post_url && (
-                                                <a href={video.post_url} target="_blank" rel="noopener noreferrer" className="view-post-link">
-                                                    View Post <Share2 size={12} />
-                                                </a>
-                                            )}
-                                        </div>
-                                    )}
+                                        {video.post_url && !video.post_url.includes('upload-failed') && (
+                                            <a href={video.post_url} target="_blank" rel="noopener noreferrer" className="view-post-link">
+                                                View Post <Share2 size={12} />
+                                            </a>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>
