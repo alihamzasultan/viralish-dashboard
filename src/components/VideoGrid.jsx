@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
-import { AlertCircle, CheckCircle, Clock, ThumbsUp, ThumbsDown, Loader, Check, X, Maximize2 } from 'lucide-react'
+import { AlertCircle, CheckCircle, Clock, ThumbsUp, ThumbsDown, Loader, Check, X, Maximize2, ExternalLink } from 'lucide-react'
 import FullscreenVideoModal from './FullscreenVideoModal'
 import '../styles/VideoGrid.css'
 import '../styles/VideoGridModal.css'
@@ -51,6 +51,11 @@ const VideoGrid = () => {
         newStatus: null,
         comment: ''
     })
+    const [approveModal, setApproveModal] = useState({
+        isOpen: false,
+        videoId: null,
+        modelType: null
+    })
 
     const openModal = (id, modelType, newStatus) => {
         setModalState({
@@ -60,6 +65,52 @@ const VideoGrid = () => {
             newStatus,
             comment: ''
         })
+    }
+
+    const handleApprove = async (id, modelType) => {
+        try {
+            const updateField = modelType === 'seedance' ? 'seedance_approved' : 'kling_approved'
+            const commentField = modelType === 'seedance' ? 'seedance_video_comment' : 'kling_video_comment'
+
+            const { error } = await supabase
+                .from('generated_videos')
+                .update({
+                    [updateField]: true
+                })
+                .eq('id', id)
+
+            if (error) throw error
+
+            setVideos(prev =>
+                prev.map(v =>
+                    v.id === id
+                        ? {
+                            ...v,
+                            [updateField]: true,
+                            // keep any existing comment unchanged
+                            [commentField]: v[commentField]
+                        }
+                        : v
+                )
+            )
+        } catch (error) {
+            console.error(`Error approving ${modelType} video:`, error)
+            alert('Failed to approve video.')
+        }
+    }
+
+    const handleReviewClick = (id, modelType, newStatus) => {
+        if (newStatus) {
+            // Approve with confirmation modal
+            setApproveModal({
+                isOpen: true,
+                videoId: id,
+                modelType
+            })
+        } else {
+            // Disapprove with comment modal
+            openModal(id, modelType, newStatus)
+        }
     }
 
     const closeModal = () => {
@@ -129,14 +180,45 @@ const VideoGrid = () => {
                 onClose={() => setFullscreenVideo({ ...fullscreenVideo, isOpen: false })}
             />
 
+            {approveModal.isOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3 className="modal-title">
+                            Approve Video
+                        </h3>
+                        <p className="modal-subtitle">
+                            Are you sure you want to approve this video to be posted?
+                        </p>
+                        <div className="modal-actions">
+                            <button
+                                className="btn-secondary"
+                                onClick={() => setApproveModal({ isOpen: false, videoId: null, modelType: null })}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="btn-primary"
+                                onClick={async () => {
+                                    if (!approveModal.videoId || !approveModal.modelType) return
+                                    await handleApprove(approveModal.videoId, approveModal.modelType)
+                                    setApproveModal({ isOpen: false, videoId: null, modelType: null })
+                                }}
+                            >
+                                Yes, approve
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {modalState.isOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
                         <h3 className="modal-title">
-                            {modalState.newStatus ? 'Approve' : 'Disapprove'} Video
+                            Disapprove Video
                         </h3>
                         <p className="modal-subtitle">
-                            Please provide a reason or comment for this action.
+                            Please provide a reason or comment for this rejection.
                         </p>
                         <textarea
                             className="modal-textarea"
@@ -211,7 +293,7 @@ const VideoGrid = () => {
                                 key={video.id}
                                 video={video}
                                 sourceUrl={sourceUrl}
-                                onApprove={openModal}
+                                onApprove={handleReviewClick}
                                 onFullscreen={(url, title) => setFullscreenVideo({ isOpen: true, url, title })}
                             />
                         )
@@ -261,10 +343,11 @@ const VideoCard = ({ video, sourceUrl, onApprove, onFullscreen }) => {
                                 href={sourceUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="view-source-btn px-3 py-2 rounded-lg bg-white bg-opacity-5 hover:bg-accent-primary hover:text-white transition-all border border-white border-opacity-10 text-xs font-semibold uppercase tracking-widest"
+                                className="view-source-btn"
                                 title="View Source Video"
                             >
-                                View source
+                                <ExternalLink size={14} />
+                                <span>View source</span>
                             </a>
                         )}
                     </div>
