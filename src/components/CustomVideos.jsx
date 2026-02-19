@@ -308,7 +308,7 @@ const CustomVideos = () => {
                                                 </div>
                                             </div>
                                             <div className="output-actions">
-                                                {!(video.seedance_feedback && video.post_url) && (
+                                                {!video.seedance_feedback && (
                                                     <div className="review-actions">
                                                         <button
                                                             className={`icon-btn btn-cv-approve ${uploadingToPortal[video.seedance_output_url] ? 'uploading' : ''}`}
@@ -394,7 +394,7 @@ const CustomVideos = () => {
                                                 </div>
                                             </div>
                                             <div className="output-actions">
-                                                {!(video.kling_feedback && video.post_url) && (
+                                                {!video.kling_feedback && (
                                                     <div className="review-actions">
                                                         <button
                                                             className={`icon-btn btn-cv-approve ${uploadingToPortal[video.kling_output_url] ? 'uploading' : ''}`}
