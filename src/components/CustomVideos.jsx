@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
-import { Clock, CheckCircle, Loader, Upload, Sparkles, AlertCircle, Share2, Maximize2 } from 'lucide-react'
+import { Clock, CheckCircle, Loader, Upload, Sparkles, AlertCircle, Share2, Maximize2, PauseCircle, ExternalLink } from 'lucide-react'
 import FullscreenVideoModal from './FullscreenVideoModal'
 import '../styles/CustomVideos.css'
 
@@ -180,7 +180,24 @@ const CustomVideos = () => {
                                     <h3 className="video-title-text">{video.video_title || 'Untitled Video'}</h3>
                                     <span className="card-date">{formatDate(video.created_at)}</span>
                                 </div>
-                                {getStatusBadge(video.generation_status)}
+                                <div className="card-header-actions">
+                                    {video.source_video_url && (
+                                        <button
+                                            className="btn-source-video"
+                                            onClick={() =>
+                                                setFullscreenVideo({
+                                                    isOpen: true,
+                                                    url: video.source_video_url,
+                                                    title: `${video.video_title || 'Untitled Video'} - Source`
+                                                })
+                                            }
+                                        >
+                                            <ExternalLink size={14} />
+                                            View Source
+                                        </button>
+                                    )}
+                                    {getStatusBadge(video.generation_status)}
+                                </div>
                             </div>
 
                             {/* Content */}
@@ -241,7 +258,7 @@ const CustomVideos = () => {
                                                     {video.generation_status === 'failed' ? (
                                                         <><AlertCircle size={20} /><span>Generation Failed</span></>
                                                     ) : (
-                                                        <><Loader size={20} className="spin" /><span>Generating...</span></>
+                                                        <><PauseCircle size={20} style={{ color: '#f59e0b' }} /><span style={{ color: '#fbbf24' }}>Seedance is Paused</span></>
                                                     )}
                                                 </div>
                                             </div>

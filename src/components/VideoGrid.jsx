@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
-import { AlertCircle, CheckCircle, Clock, ThumbsUp, ThumbsDown, Loader, Check, X, Maximize2, ExternalLink } from 'lucide-react'
+import { AlertCircle, CheckCircle, Clock, ThumbsUp, ThumbsDown, Loader, Check, X, Maximize2, ExternalLink, PauseCircle } from 'lucide-react'
 import FullscreenVideoModal from './FullscreenVideoModal'
 import '../styles/VideoGrid.css'
 import '../styles/VideoGridModal.css'
@@ -408,9 +408,9 @@ const VideoCard = ({ video, sourceUrl, onApprove, onFullscreen }) => {
                                 </div>
                             </>
                         ) : isPending ? (
-                            <div className="h-full flex flex-col items-center justify-center gap-3 bg-white bg-opacity-5 animate-pulse">
-                                <Loader className="animate-spin text-indigo-500" size={24} />
-                                <span className="text-[10px] uppercase font-bold tracking-widest text-indigo-400">Processing</span>
+                            <div className="h-full flex flex-col items-center justify-center gap-3 bg-amber-500 bg-opacity-5">
+                                <PauseCircle className="text-amber-500" size={24} />
+                                <span className="text-[10px] uppercase font-bold tracking-widest text-amber-400">Seedance is Paused</span>
                             </div>
                         ) : (
                             <div className="empty-video-placeholder">
