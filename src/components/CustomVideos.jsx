@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
-import { Clock, CheckCircle, Loader, Upload, Sparkles, AlertCircle, Share2, Maximize2, PauseCircle, ExternalLink } from 'lucide-react'
+import { Clock, CheckCircle, Loader, Upload, Sparkles, AlertCircle, Share2, Maximize2, PauseCircle, ExternalLink, Check, X, RefreshCw } from 'lucide-react'
 import FullscreenVideoModal from './FullscreenVideoModal'
 import '../styles/CustomVideos.css'
+import '../styles/VideoGridModal.css'
 
 const CustomVideos = () => {
     const [videos, setVideos] = useState([])
@@ -11,6 +12,8 @@ const CustomVideos = () => {
     const [uploadErrors, setUploadErrors] = useState({}) // track errors per video URL
     const [uploadingToPortal, setUploadingToPortal] = useState({}) // track loading per video URL
     const [fullscreenVideo, setFullscreenVideo] = useState({ isOpen: false, url: '', title: '' })
+    const [feedbackModal, setFeedbackModal] = useState({ isOpen: false, videoId: null, videoUrl: null, videoTitle: '', feedback: '', modelType: null })
+    const [refreshing, setRefreshing] = useState(false)
 
     const portalWebhookUrl = '/api/n8n/webhook/dd407330-7555-472e-bcda-0b35994e1b16'
 
@@ -31,6 +34,22 @@ const CustomVideos = () => {
             console.error('Error fetching custom videos:', error)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleRefresh = async () => {
+        setRefreshing(true)
+        try {
+            const { data, error } = await supabase
+                .from('custom_videos')
+                .select('*')
+                .order('created_at', { ascending: false })
+            if (error) throw error
+            setVideos(data || [])
+        } catch (error) {
+            console.error('Error refreshing custom videos:', error)
+        } finally {
+            setRefreshing(false)
         }
     }
 
@@ -58,6 +77,27 @@ const CustomVideos = () => {
             setUploadErrors(prev => ({ ...prev, [videoUrl]: 'Portal upload failed. Please try again.' }))
         } finally {
             setUploadingToPortal(prev => ({ ...prev, [videoUrl]: false }))
+        }
+    }
+
+    const handleReject = async () => {
+        const { videoId, feedback, modelType } = feedbackModal
+        if (!feedback.trim()) {
+            alert('Please enter feedback before submitting.')
+            return
+        }
+        const feedbackColumn = modelType === 'seedance' ? 'seedance_feedback' : 'kling_feedback'
+        try {
+            const { error } = await supabase
+                .from('custom_videos')
+                .update({ [feedbackColumn]: feedback })
+                .eq('id', videoId)
+            if (error) throw error
+            setVideos(prev => prev.map(v => v.id === videoId ? { ...v, [feedbackColumn]: feedback } : v))
+            setFeedbackModal({ isOpen: false, videoId: null, videoUrl: null, videoTitle: '', feedback: '', modelType: null })
+        } catch (error) {
+            console.error('Error saving feedback:', error)
+            alert('Failed to save feedback.')
         }
     }
 
@@ -116,6 +156,36 @@ const CustomVideos = () => {
                 onClose={() => setFullscreenVideo({ ...fullscreenVideo, isOpen: false })}
             />
 
+            {/* Feedback Rejection Modal */}
+            {feedbackModal.isOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3 className="modal-title">Reject Video</h3>
+                        <p className="modal-subtitle">
+                            Please provide feedback for why this video is being rejected.
+                        </p>
+                        <textarea
+                            className="modal-textarea"
+                            value={feedbackModal.feedback}
+                            onChange={(e) => setFeedbackModal({ ...feedbackModal, feedback: e.target.value })}
+                            placeholder="Enter your feedback here..."
+                            rows={4}
+                        />
+                        <div className="modal-actions">
+                            <button
+                                className="btn-secondary"
+                                onClick={() => setFeedbackModal({ isOpen: false, videoId: null, videoUrl: null, videoTitle: '', feedback: '', modelType: null })}
+                            >
+                                Cancel
+                            </button>
+                            <button className="btn-primary" onClick={handleReject}>
+                                Submit Feedback
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="video-grid-header" style={{ marginBottom: '2rem' }}>
                 <div className="header-text">
                     <h2 className="section-title">
@@ -155,6 +225,14 @@ const CustomVideos = () => {
                         {failedVideos.length > 0 && <span className="failed-dot" style={{ width: '8px', height: '8px', backgroundColor: '#ef4444', borderRadius: '50%' }} />}
                     </button>
                 </div>
+                <button
+                    className={`btn-refresh ${refreshing ? 'refreshing' : ''}`}
+                    onClick={handleRefresh}
+                    disabled={refreshing}
+                    title="Refresh videos"
+                >
+                    <RefreshCw size={16} />
+                </button>
             </div>
 
             {displayedVideos.length === 0 ? (
@@ -230,18 +308,42 @@ const CustomVideos = () => {
                                                 </div>
                                             </div>
                                             <div className="output-actions">
-                                                <button
-                                                    className={`btn-upload-small ${uploadingToPortal[video.seedance_output_url] ? 'uploading' : ''}`}
-                                                    onClick={() => handlePortalUpload(video.seedance_output_url, video.id, video.video_title)}
-                                                    disabled={uploadingToPortal[video.seedance_output_url]}
-                                                >
-                                                    {uploadingToPortal[video.seedance_output_url] ? (
-                                                        <Loader size={14} className="spin" />
-                                                    ) : (
-                                                        <Upload size={14} />
-                                                    )}
-                                                    {uploadingToPortal[video.seedance_output_url] ? 'Scheduling...' : 'Schedule Post'}
-                                                </button>
+                                                {!(video.seedance_feedback && video.post_url) && (
+                                                    <div className="review-actions">
+                                                        <button
+                                                            className={`icon-btn btn-cv-approve ${uploadingToPortal[video.seedance_output_url] ? 'uploading' : ''}`}
+                                                            onClick={() => handlePortalUpload(video.seedance_output_url, video.id, video.video_title)}
+                                                            disabled={uploadingToPortal[video.seedance_output_url]}
+                                                            title="Approve & Schedule Post"
+                                                        >
+                                                            {uploadingToPortal[video.seedance_output_url] ? (
+                                                                <Loader size={16} className="spin" />
+                                                            ) : (
+                                                                <Check size={16} />
+                                                            )}
+                                                        </button>
+                                                        <button
+                                                            className="icon-btn btn-cv-reject"
+                                                            onClick={() => setFeedbackModal({
+                                                                isOpen: true,
+                                                                videoId: video.id,
+                                                                videoUrl: video.seedance_output_url,
+                                                                videoTitle: video.video_title || 'Untitled Video',
+                                                                feedback: '',
+                                                                modelType: 'seedance'
+                                                            })}
+                                                            title="Reject with Feedback"
+                                                        >
+                                                            <X size={16} />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                {video.seedance_feedback && (
+                                                    <div className="feedback-display-inline">
+                                                        <span className="feedback-label">Feedback</span>
+                                                        <p className="feedback-text">"{video.seedance_feedback}"</p>
+                                                    </div>
+                                                )}
                                                 {uploadErrors[video.seedance_output_url] && (
                                                     <div className="upload-error-msg">
                                                         <AlertCircle size={12} />
@@ -292,18 +394,42 @@ const CustomVideos = () => {
                                                 </div>
                                             </div>
                                             <div className="output-actions">
-                                                <button
-                                                    className={`btn-upload-small ${uploadingToPortal[video.kling_output_url] ? 'uploading' : ''}`}
-                                                    onClick={() => handlePortalUpload(video.kling_output_url, video.id, video.video_title)}
-                                                    disabled={uploadingToPortal[video.kling_output_url]}
-                                                >
-                                                    {uploadingToPortal[video.kling_output_url] ? (
-                                                        <Loader size={14} className="spin" />
-                                                    ) : (
-                                                        <Upload size={14} />
-                                                    )}
-                                                    {uploadingToPortal[video.kling_output_url] ? 'Scheduling...' : 'Schedule Post'}
-                                                </button>
+                                                {!(video.kling_feedback && video.post_url) && (
+                                                    <div className="review-actions">
+                                                        <button
+                                                            className={`icon-btn btn-cv-approve ${uploadingToPortal[video.kling_output_url] ? 'uploading' : ''}`}
+                                                            onClick={() => handlePortalUpload(video.kling_output_url, video.id, video.video_title)}
+                                                            disabled={uploadingToPortal[video.kling_output_url]}
+                                                            title="Approve & Schedule Post"
+                                                        >
+                                                            {uploadingToPortal[video.kling_output_url] ? (
+                                                                <Loader size={16} className="spin" />
+                                                            ) : (
+                                                                <Check size={16} />
+                                                            )}
+                                                        </button>
+                                                        <button
+                                                            className="icon-btn btn-cv-reject"
+                                                            onClick={() => setFeedbackModal({
+                                                                isOpen: true,
+                                                                videoId: video.id,
+                                                                videoUrl: video.kling_output_url,
+                                                                videoTitle: video.video_title || 'Untitled Video',
+                                                                feedback: '',
+                                                                modelType: 'kling'
+                                                            })}
+                                                            title="Reject with Feedback"
+                                                        >
+                                                            <X size={16} />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                {video.kling_feedback && (
+                                                    <div className="feedback-display-inline">
+                                                        <span className="feedback-label">Feedback</span>
+                                                        <p className="feedback-text">"{video.kling_feedback}"</p>
+                                                    </div>
+                                                )}
                                                 {uploadErrors[video.kling_output_url] && (
                                                     <div className="upload-error-msg">
                                                         <AlertCircle size={12} />
@@ -348,6 +474,8 @@ const CustomVideos = () => {
                                     </p>
                                 </div>
                             )}
+
+
 
                             {/* Posted Status */}
                             {video.posted && (
