@@ -260,19 +260,15 @@ const CustomVideos = () => {
                                 </div>
                                 <div className="card-header-actions">
                                     {video.source_video_url && (
-                                        <button
+                                        <a
                                             className="btn-source-video"
-                                            onClick={() =>
-                                                setFullscreenVideo({
-                                                    isOpen: true,
-                                                    url: video.source_video_url,
-                                                    title: `${video.video_title || 'Untitled Video'} - Source`
-                                                })
-                                            }
+                                            href={video.source_video_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
                                         >
                                             <ExternalLink size={14} />
                                             View Source
-                                        </button>
+                                        </a>
                                     )}
                                     {getStatusBadge(video.generation_status)}
                                 </div>
