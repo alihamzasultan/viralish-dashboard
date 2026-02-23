@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
-import { Clock, CheckCircle, Loader, Upload, Sparkles, AlertCircle, Share2, Maximize2, PauseCircle, ExternalLink, Check, X, RefreshCw } from 'lucide-react'
+import { Clock, CheckCircle, Loader, Upload, Sparkles, AlertCircle, Share2, Maximize2, PauseCircle, ExternalLink, Check, X, RefreshCw, FileText, Copy } from 'lucide-react'
 import FullscreenVideoModal from './FullscreenVideoModal'
 import '../styles/CustomVideos.css'
 import '../styles/VideoGridModal.css'
@@ -14,6 +14,7 @@ const CustomVideos = () => {
     const [fullscreenVideo, setFullscreenVideo] = useState({ isOpen: false, url: '', title: '' })
     const [feedbackModal, setFeedbackModal] = useState({ isOpen: false, videoId: null, videoUrl: null, videoTitle: '', feedback: '', modelType: null })
     const [refreshing, setRefreshing] = useState(false)
+    const [promptModal, setPromptModal] = useState({ isOpen: false, title: '', prompt: '' })
 
     const portalWebhookUrl = '/api/n8n/webhook/dd407330-7555-472e-bcda-0b35994e1b16'
 
@@ -101,6 +102,11 @@ const CustomVideos = () => {
         }
     }
 
+    const handleCopyPrompt = (text) => {
+        navigator.clipboard.writeText(text)
+        alert('Prompt copied to clipboard!')
+    }
+
     const getStatusBadge = (status) => {
         switch (status) {
             case 'started':
@@ -180,6 +186,36 @@ const CustomVideos = () => {
                             </button>
                             <button className="btn-primary" onClick={handleReject}>
                                 Submit Feedback
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Prompt View Modal */}
+            {promptModal.isOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-content prompt-modal-content">
+                        <h3 className="modal-title">{promptModal.title}</h3>
+                        <p className="modal-subtitle">Full AI generation prompt used for this video.</p>
+
+                        <div className="prompt-display-area">
+                            <p className="prompt-text-content">{promptModal.prompt}</p>
+                        </div>
+
+                        <div className="modal-actions">
+                            <button
+                                className="btn-copy-prompt"
+                                onClick={() => handleCopyPrompt(promptModal.prompt)}
+                            >
+                                <Copy size={14} />
+                                Copy Prompt
+                            </button>
+                            <button
+                                className="btn-secondary"
+                                onClick={() => setPromptModal({ isOpen: false, title: '', prompt: '' })}
+                            >
+                                Close
                             </button>
                         </div>
                     </div>
@@ -304,6 +340,19 @@ const CustomVideos = () => {
                                                 </div>
                                             </div>
                                             <div className="output-actions">
+                                                {video.seedance_prompt && (
+                                                    <button
+                                                        className="btn-view-prompt"
+                                                        onClick={() => setPromptModal({
+                                                            isOpen: true,
+                                                            title: 'Seedance Prompt',
+                                                            prompt: video.seedance_prompt
+                                                        })}
+                                                    >
+                                                        <FileText size={14} />
+                                                        View Prompt
+                                                    </button>
+                                                )}
                                                 {!video.seedance_feedback && (
                                                     <div className="review-actions">
                                                         <button
@@ -390,6 +439,19 @@ const CustomVideos = () => {
                                                 </div>
                                             </div>
                                             <div className="output-actions">
+                                                {video.kling_prompt && (
+                                                    <button
+                                                        className="btn-view-prompt"
+                                                        onClick={() => setPromptModal({
+                                                            isOpen: true,
+                                                            title: 'Kling Prompt',
+                                                            prompt: video.kling_prompt
+                                                        })}
+                                                    >
+                                                        <FileText size={14} />
+                                                        View Prompt
+                                                    </button>
+                                                )}
                                                 {!video.kling_feedback && (
                                                     <div className="review-actions">
                                                         <button
