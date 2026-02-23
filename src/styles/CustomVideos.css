@@ -769,3 +769,173 @@
         white-space: nowrap;
     }
 }
+
+/* View Prompt Button */
+.btn-view-prompt {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(255, 255, 255, 0.05);
+    color: #a5b4fc;
+    border: 1px solid rgba(165, 180, 252, 0.2);
+    width: 100%;
+}
+
+.btn-view-prompt:hover {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(165, 180, 252, 0.4);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.btn-view-prompt svg {
+    opacity: 0.8;
+}
+
+/* Prompt Modal Specifics */
+.prompt-modal-content {
+    max-width: 700px !important;
+    position: relative;
+}
+
+.prompt-display-area {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.prompt-text-content {
+    color: #e5e7eb;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
+    white-space: pre-wrap;
+    font-family: 'Inter', sans-serif;
+}
+
+.btn-copy-prompt {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.8rem;
+    background: rgba(99, 102, 241, 0.1);
+    color: #a5b4fc;
+    border: 1px solid rgba(165, 180, 252, 0.2);
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-copy-prompt:hover {
+    background: rgba(99, 102, 241, 0.2);
+    color: #fff;
+}
+
+/* Mobile & Professional Refinement */
+
+@media (max-width: 640px) {
+    .custom-videos-container {
+        padding: 1.5rem 1rem 2rem;
+    }
+
+    .custom-videos-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem;
+    }
+
+    .card-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .card-header-actions {
+        width: 100%;
+        align-items: flex-start;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .video-outputs {
+        grid-template-columns: 1fr !important;
+        padding: 0.5rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+    }
+
+    .video-grid-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .video-tabs {
+        overflow-x: auto;
+        padding: 0.25rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .tab-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* Glassmorphism Refinement */
+.custom-video-card {
+    background: linear-gradient(135deg, rgba(30, 32, 48, 0.7) 0%, rgba(20, 21, 33, 0.7) 100%);
+    box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
+}
+
+.video-wrapper {
+    background: #0a0a0f;
+    transition: transform 0.3s ease;
+}
+
+.video-wrapper:hover {
+    transform: scale(1.02);
+}
+
+/* Modal Improvements for Mobile */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95% !important;
+        padding: 1.5rem !important;
+        margin: 1rem;
+    }
+
+    .prompt-display-area {
+        max-height: 250px;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .modal-actions button {
+        width: 100%;
+    }
+}
+
+/* Loading/Empty State Refinement */
+.loading-container,
+.empty-state {
+    background: rgba(30, 32, 48, 0.2);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin: 2rem 0;
+}
