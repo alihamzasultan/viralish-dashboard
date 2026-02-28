@@ -16,6 +16,7 @@ const CustomVideos = () => {
     const [refreshing, setRefreshing] = useState(false)
     const [promptModal, setPromptModal] = useState({ isOpen: false, title: '', prompt: '' })
     const [retrying, setRetrying] = useState({}) // track retrying per video ID
+    const [isRetryingGlobal, setIsRetryingGlobal] = useState(false) // track global blocking state
 
     const portalWebhookUrl = '/api/n8n/webhook/dd407330-7555-472e-bcda-0b35994e1b16'
 
@@ -88,41 +89,26 @@ const CustomVideos = () => {
             return
         }
 
+        const confirmRetry = window.confirm('This will delete the current generation and start a completely new one. Continue?')
+        if (!confirmRetry) return
+
         setRetrying(prev => ({ ...prev, [video.id]: true }))
+        setIsRetryingGlobal(true)
         const importWebhookUrl = '/api/n8n/webhook/ed9165ec-7dc6-4fcd-a4b8-2492b6aab8d0'
 
         try {
-            // Update the created_at timestamp and reset status in Supabase
-            const nowIso = new Date().toISOString()
-            const { error: updateError } = await supabase
+            // 1. Delete the existing record from Supabase
+            const { error: deleteError } = await supabase
                 .from('custom_videos')
-                .update({
-                    created_at: nowIso,
-                    generation_status: 'pending',
-                    seedance_output_url: null,
-                    kling_output_url: null,
-                    seedance_prompt: null,
-                    kling_prompt: null,
-                    seedance_feedback: null,
-                    kling_feedback: null
-                })
+                .delete()
                 .eq('id', video.id)
 
-            if (updateError) throw updateError
+            if (deleteError) throw deleteError
 
-            // Optimistically update local state
-            setVideos(prev => prev.map(v => v.id === video.id ? {
-                ...v,
-                created_at: nowIso,
-                generation_status: 'pending',
-                seedance_output_url: null,
-                kling_output_url: null,
-                seedance_prompt: null,
-                kling_prompt: null,
-                kling_feedback: null
-            } : v))
+            // 2. Remove from local state
+            setVideos(prev => prev.filter(v => v.id !== video.id))
 
-            // Trigger the same webhook as VideoUpload
+            // 3. Trigger the same webhook as VideoUpload
             const response = await fetch(importWebhookUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -131,13 +117,14 @@ const CustomVideos = () => {
 
             if (!response.ok) throw new Error('Failed to trigger retry webhook')
 
-            alert('🔄 Retry started successfully! The video is back in the processing queue.')
+            alert('🔄 Retry started successfully! A new generation record will appear in the pending queue.')
             setActiveTab('pending')
         } catch (error) {
             console.error('Error retrying video:', error)
             alert('Failed to retry video: ' + error.message)
         } finally {
             setRetrying(prev => ({ ...prev, [video.id]: false }))
+            setIsRetryingGlobal(false)
         }
     }
 
@@ -223,6 +210,19 @@ const CustomVideos = () => {
 
     return (
         <div className="custom-videos-container">
+            {/* Global Retry Loading Overlay */}
+            {isRetryingGlobal && (
+                <div className="global-retry-overlay">
+                    <div className="retry-loader-content">
+                        <div className="loader-wrapper">
+                            <Loader size={48} className="spin" style={{ color: '#6366f1' }} />
+                            <div className="loader-pulse" />
+                        </div>
+                        <h3>Initiating Retry</h3>
+                        <p>Cleaning up previous record and restarting generation...</p>
+                    </div>
+                </div>
+            )}
             <FullscreenVideoModal
                 isOpen={fullscreenVideo.isOpen}
                 videoUrl={fullscreenVideo.url}
