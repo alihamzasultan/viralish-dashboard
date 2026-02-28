@@ -135,6 +135,44 @@
     transform: translateY(0);
 }
 
+.btn-retry-video {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.15));
+    color: #fca5a5;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-retry-video:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.3));
+    border-color: rgba(239, 68, 68, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+    color: #fecaca;
+}
+
+.btn-retry-video:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-retry-video:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-retry-video.refreshing svg {
+    animation: spin 1s linear infinite;
+}
+
 /* Status Badges */
 .status-badge {
     display: inline-flex;
