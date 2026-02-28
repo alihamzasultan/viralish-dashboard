@@ -15,6 +15,7 @@ const CustomVideos = () => {
     const [feedbackModal, setFeedbackModal] = useState({ isOpen: false, videoId: null, videoUrl: null, videoTitle: '', feedback: '', modelType: null })
     const [refreshing, setRefreshing] = useState(false)
     const [promptModal, setPromptModal] = useState({ isOpen: false, title: '', prompt: '' })
+    const [retrying, setRetrying] = useState({}) // track retrying per video ID
 
     const portalWebhookUrl = '/api/n8n/webhook/dd407330-7555-472e-bcda-0b35994e1b16'
 
@@ -78,6 +79,65 @@ const CustomVideos = () => {
             setUploadErrors(prev => ({ ...prev, [videoUrl]: 'Portal upload failed. Please try again.' }))
         } finally {
             setUploadingToPortal(prev => ({ ...prev, [videoUrl]: false }))
+        }
+    }
+
+    const handleRetry = async (video) => {
+        if (!video.source_video_url) {
+            alert('Cannot retry: Source URL is missing.')
+            return
+        }
+
+        setRetrying(prev => ({ ...prev, [video.id]: true }))
+        const importWebhookUrl = '/api/n8n/webhook/ed9165ec-7dc6-4fcd-a4b8-2492b6aab8d0'
+
+        try {
+            // Update the created_at timestamp and reset status in Supabase
+            const nowIso = new Date().toISOString()
+            const { error: updateError } = await supabase
+                .from('custom_videos')
+                .update({
+                    created_at: nowIso,
+                    generation_status: 'pending',
+                    seedance_output_url: null,
+                    kling_output_url: null,
+                    seedance_prompt: null,
+                    kling_prompt: null,
+                    seedance_feedback: null,
+                    kling_feedback: null
+                })
+                .eq('id', video.id)
+
+            if (updateError) throw updateError
+
+            // Optimistically update local state
+            setVideos(prev => prev.map(v => v.id === video.id ? {
+                ...v,
+                created_at: nowIso,
+                generation_status: 'pending',
+                seedance_output_url: null,
+                kling_output_url: null,
+                seedance_prompt: null,
+                kling_prompt: null,
+                kling_feedback: null
+            } : v))
+
+            // Trigger the same webhook as VideoUpload
+            const response = await fetch(importWebhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: video.source_video_url })
+            })
+
+            if (!response.ok) throw new Error('Failed to trigger retry webhook')
+
+            alert('🔄 Retry started successfully! The video is back in the processing queue.')
+            setActiveTab('pending')
+        } catch (error) {
+            console.error('Error retrying video:', error)
+            alert('Failed to retry video: ' + error.message)
+        } finally {
+            setRetrying(prev => ({ ...prev, [video.id]: false }))
         }
     }
 
@@ -147,8 +207,16 @@ const CustomVideos = () => {
         )
     }
 
-    const pendingVideos = videos.filter(v => ['pending', 'started', 'prompts-done'].includes(v.generation_status))
-    const failedVideos = videos.filter(v => v.generation_status === 'failed')
+    const now = new Date()
+    const getEffectiveStatus = (v) => {
+        if (v.generation_status === 'failed') return 'failed'
+        const hasNoOutputs = !v.seedance_output_url && !v.kling_output_url
+        const minutesElapsed = (now - new Date(v.created_at)) / (1000 * 60)
+        return (hasNoOutputs && minutesElapsed > 30) ? 'failed' : (v.generation_status || 'pending')
+    }
+
+    const pendingVideos = videos.filter(v => ['pending', 'started', 'prompts-done'].includes(getEffectiveStatus(v)))
+    const failedVideos = videos.filter(v => getEffectiveStatus(v) === 'failed')
     const completedVideos = videos.filter(v => v.generation_status === 'done' || (v.seedance_output_url && v.kling_output_url))
 
     const displayedVideos = activeTab === 'pending' ? pendingVideos : activeTab === 'failed' ? failedVideos : completedVideos
@@ -306,12 +374,23 @@ const CustomVideos = () => {
                                             View Source
                                         </a>
                                     )}
-                                    {getStatusBadge(video.generation_status)}
+                                    {getEffectiveStatus(video) === 'failed' && (
+                                        <button
+                                            className={`btn-retry-video ${retrying[video.id] ? 'refreshing' : ''}`}
+                                            onClick={() => handleRetry(video)}
+                                            disabled={retrying[video.id]}
+                                            title="Retry Generation"
+                                        >
+                                            {retrying[video.id] ? <Loader size={12} className="spin" /> : <RefreshCw size={12} />}
+                                            Retry
+                                        </button>
+                                    )}
+                                    {getStatusBadge(getEffectiveStatus(video))}
                                 </div>
                             </div>
 
                             {/* Content */}
-                            {(video.seedance_output_url || video.kling_output_url || video.generation_status === 'done' || video.generation_status === 'failed') ? (
+                            {(video.seedance_output_url || video.kling_output_url || video.generation_status === 'done' || getEffectiveStatus(video) === 'failed') ? (
                                 <div className="video-outputs">
                                     {/* Seedance Output */}
                                     {video.seedance_output_url ? (
@@ -402,7 +481,7 @@ const CustomVideos = () => {
                                             <div className="video-wrapper">
                                                 <div className="video-label">Seedance</div>
                                                 <div className="video-placeholder-content">
-                                                    {video.generation_status === 'failed' ? (
+                                                    {getEffectiveStatus(video) === 'failed' ? (
                                                         <><AlertCircle size={20} /><span>Generation Failed</span></>
                                                     ) : (
                                                         <><PauseCircle size={20} style={{ color: '#f59e0b' }} /><span style={{ color: '#fbbf24' }}>Seedance is Paused</span></>
@@ -501,7 +580,7 @@ const CustomVideos = () => {
                                             <div className="video-wrapper">
                                                 <div className="video-label">Kling</div>
                                                 <div className="video-placeholder-content">
-                                                    {video.generation_status === 'failed' ? (
+                                                    {getEffectiveStatus(video) === 'failed' ? (
                                                         <><AlertCircle size={20} /><span>Generation Failed</span></>
                                                     ) : (
                                                         <><Loader size={20} className="spin" /><span>Generating...</span></>
@@ -511,7 +590,7 @@ const CustomVideos = () => {
                                         </div>
                                     )}
                                 </div>
-                            ) : video.generation_status === 'failed' ? (
+                            ) : getEffectiveStatus(video) === 'failed' ? (
                                 <div className="processing-placeholder failed">
                                     <div className="processing-icon failed">
                                         <AlertCircle size={24} style={{ color: '#ef4444' }} />
